@@ -1,17 +1,20 @@
-// database-setup.js
-// Run this with: node database-setup.js
+// STEPS TO RUN THE PROJECT 
+// 1. download the project and extract the files 
+// open the project and RUN npm install in terminal for packages and dependencies 
+// and start the frontend by npm run dev
+// 2. type cd backend in terminal to go to backend directory 
+    // here also run npm install 
 
-require('dotenv').config();
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+    // 3. important step 
 
-// Load environment variables - MATCHES YOUR .ENV FILE
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/amazon_clone';
-const DB_NAME = 'amazon_clone'; // Hardcoded to match your .env
+    // add the watch data given below in the database through compass 
+  
+    // the data contains the watch image url do not change anything
 
-console.log('🔗 Connecting to database:', DB_NAME);
+    // working web app
 
-// Sample users data
+
+// optional if u want to add the below data or not
 const sampleUsers = [
   {
     name: 'John Doe',
@@ -39,7 +42,9 @@ const sampleUsers = [
   }
 ];
 
-// YOUR ACTUAL WATCH DATA (from your MongoDB export)
+   
+// add the data below in your database through campas
+
 const sampleWatches = [
   {
     name: "Breitling Navitimer",
@@ -427,229 +432,3 @@ const sampleWatches = [
     category: "luxury"
   }
 ];
-
-// Connect to MongoDB - UPDATED TO MATCH YOUR .ENV
-async function connectDB() {
-  try {
-    await mongoose.connect(MONGO_URI, {
-      // REMOVED dbName since it's already in the URI
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('✅ Connected to MongoDB database:', DB_NAME);
-    return true;
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
-    console.log('Please check your MONGO_URI in .env file');
-    console.log('Current URI:', MONGO_URI);
-    return false;
-  }
-}
-
-// Define schemas matching your data structure
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: String,
-  address: String,
-  isAdmin: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const productSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  price: { type: Number, required: true },
-  image: { type: String },
-  images: [String],
-  description: { type: String, required: true },
-  categories: [String],
-  rating: { type: Number, min: 0, max: 5 },
-  reviews: [{
-    username: String,
-    rating: Number,
-    comment: String,
-    date: { type: Date, default: Date.now }
-  }],
-  specs: [String],
-  quantityAvailable: { type: Number, default: 0 },
-  inStock: { type: Boolean, default: true },
-  brand: String,
-  category: String,
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
-const Product = mongoose.model('Product', productSchema);
-
-// Hash password function
-async function hashPassword(password) {
-  const salt = await bcrypt.genSalt(10);
-  return await bcrypt.hash(password, salt);
-}
-
-// Extract brand from product name for consistent data
-function extractBrand(productName) {
-  const brands = [
-    'Breitling', 'Cartier', 'Hamilton', 'Hublot', 'IWC', 
-    'Jaeger-LeCoultre', 'Omega', 'Panerai', 'Patek Philippe', 
-    'ROLEX', 'Tag Heuer'
-  ];
-  
-  for (const brand of brands) {
-    if (productName.includes(brand)) {
-      return brand;
-    }
-  }
-  
-  // Extract first word as brand
-  return productName.split(' ')[0];
-}
-
-// Extract main category
-function extractMainCategory(categories) {
-  if (categories.includes('luxury')) return 'luxury';
-  if (categories.includes('mid-luxury')) return 'mid-luxury';
-  return categories[0] || 'watches';
-}
-
-// Process products to ensure consistent structure
-function processProducts(products) {
-  return products.map(product => {
-    return {
-      ...product,
-      brand: extractBrand(product.name),
-      category: extractMainCategory(product.categories),
-      // Ensure all required fields exist
-      categories: product.categories || [],
-      images: product.images || [],
-      reviews: product.reviews || [],
-      specs: product.specs || []
-    };
-  });
-}
-
-// Populate database
-async function populateDatabase() {
-  try {
-    console.log('\n🗑️ Clearing existing data...');
-    await User.deleteMany({});
-    await Product.deleteMany({});
-    console.log('✅ Existing data cleared');
-
-    // Create users with hashed passwords
-    console.log('\n👤 Creating users...');
-    const createdUsers = [];
-    for (const user of sampleUsers) {
-      const hashedPassword = await hashPassword(user.password);
-      const newUser = new User({
-        ...user,
-        password: hashedPassword
-      });
-      const savedUser = await newUser.save();
-      createdUsers.push(savedUser);
-    }
-    console.log(`✅ Created ${createdUsers.length} users`);
-
-    // Process and create products
-    console.log('\n🛍️ Creating products...');
-    const processedProducts = processProducts(sampleWatches);
-    const createdProducts = [];
-    
-    for (const product of processedProducts) {
-      const newProduct = new Product(product);
-      const savedProduct = await newProduct.save();
-      createdProducts.push(savedProduct);
-    }
-    
-    console.log(`✅ Created ${createdProducts.length} luxury watches`);
-
-    // Display summary
-    console.log('\n🎉 Database populated successfully!');
-    console.log('====================================');
-    console.log('\n📋 Sample User Credentials:');
-    console.log('-------------------------');
-    sampleUsers.forEach((user, index) => {
-      console.log(`${index + 1}. Name: ${user.name}`);
-      console.log(`   Email: ${user.email}`);
-      console.log(`   Password: ${user.password}`);
-      console.log(`   Admin: ${user.isAdmin ? 'Yes' : 'No'}`);
-      console.log('');
-    });
-
-    console.log('\n📊 Product Database Summary:');
-    console.log('---------------------------');
-    console.log(`Total Products: ${createdProducts.length}`);
-    console.log(`Total Brands: ${[...new Set(createdProducts.map(p => p.brand))].length}`);
-    console.log(`Total Categories: ${[...new Set(createdProducts.flatMap(p => p.categories))].length}`);
-    
-    console.log('\n🏷️ Available Brands:');
-    const brands = [...new Set(createdProducts.map(p => p.brand))];
-    console.log(brands.join(', '));
-    
-    console.log('\n🏷️ Price Range:');
-    const prices = createdProducts.map(p => p.price);
-    console.log(`Min: $${Math.min(...prices).toFixed(2)}`);
-    console.log(`Max: $${Math.max(...prices).toFixed(2)}`);
-    console.log(`Avg: $${(prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2)}`);
-    
-    console.log('\n🔗 Connection Details:');
-    console.log('-------------------');
-    console.log(`Database: ${DB_NAME}`);
-    console.log(`URI: ${MONGO_URI.replace(/:[^:]*@/, ':****@')}`); // Hide password
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error populating database:', error.message);
-    if (error.code === 11000) {
-      console.log('Duplicate key error - email already exists');
-    }
-    return false;
-  }
-}
-
-// Main function
-async function main() {
-  console.log('🚀 Starting Luxury Watch Database Setup...');
-  console.log('==========================================\n');
-  
-  // Check for required packages
-  try {
-    require('dotenv');
-    require('mongoose');
-    require('bcryptjs');
-  } catch (err) {
-    console.log('❌ Required packages not installed.');
-    console.log('Please run: npm install dotenv mongoose bcryptjs');
-    process.exit(1);
-  }
-  
-  // Connect to database
-  const connected = await connectDB();
-  if (!connected) {
-    process.exit(1);
-  }
-  
-  // Populate data
-  const populated = await populateDatabase();
-  
-  // Close connection
-  await mongoose.connection.close();
-  console.log('\n🔗 MongoDB connection closed');
-  console.log(populated ? '✅ Setup completed successfully!' : '❌ Setup failed');
-  
-  process.exit(populated ? 0 : 1);
-}
-
-// Run the setup
-if (require.main === module) {
-  main().catch(err => {
-    console.error('❌ Unexpected error:', err);
-    process.exit(1);
-  });
-}
-
-module.exports = { connectDB, populateDatabase };
