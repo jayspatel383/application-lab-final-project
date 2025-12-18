@@ -1,0 +1,14 @@
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5M2I0YzJjODIwNDY2NGI3NDk3YTgyZCIsImlzQWRtaW4iOnRydWUsImlhdCI6MTc2NTQ5NTQwNSwiZXhwIjoxNzY2MTAwMjA1fQ.ckt0TaDz78SZvoQ5sGdxsEo3HXmjyp4oEettCOOzI0Y",
+  "user": {
+    "_id": "693b4c2c8204664b7497a82d",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "$2b$10$21aVgpmlTy4w902p97mTheHWPiXhdEjZvgQ9.cFA4uHbKQugdM7rq",
+    "isAdmin": true,
+    "createdAt": "2025-12-11T22:56:44.387Z",
+    "updatedAt": "2025-12-11T22:56:44.387Z",
+    "__v": 0
+  }
+}
